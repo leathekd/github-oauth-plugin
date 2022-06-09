@@ -73,34 +73,42 @@ public class GithubAuthenticationTokenTest {
 
     private void mockAuthorizedOrgs(String org) {
         Set<String> authorizedOrgs = new HashSet<>(Arrays.asList(org));
-        PowerMockito.when(this.securityRealm.getAuthorizedOrganizations()).thenReturn(authorizedOrgs);
-        PowerMockito.when(this.securityRealm.hasScope("user")).thenReturn(true);
+        Mockito.when(this.securityRealm.getAuthorizedOrganizations()).thenReturn(authorizedOrgs);
+        Mockito.when(this.securityRealm.hasScope("user")).thenReturn(true);
     }
 
     private void mockAsInOrg(String org) throws IOException {
         Map<String, GHOrganization> myOrgs = new HashMap<>();
         myOrgs.put(org, new GHOrganization());
-        PowerMockito.when(this.gh.getMyOrganizations()).thenReturn(myOrgs);
+        Mockito.when(this.gh.getMyOrganizations()).thenReturn(myOrgs);
     }
 
     @Test
     public void testInAuthorizedOrgs() throws IOException {
-        mockGHMyselfAs("bob");
-        mockAuthorizedOrgs("orgA");
-        mockAsInOrg("orgA");
+        try (MockedStatic<Jenkins> mockedJenkins = Mockito.mockStatic(Jenkins.class);
+             MockedStatic<GitHubBuilder> mockedGitHubBuilder = Mockito.mockStatic(GitHubBuilder.class)) {
+            mockJenkins(mockedJenkins);
+            mockGHMyselfAs(mockedGitHubBuilder, "bob");
+            mockAuthorizedOrgs("orgA");
+            mockAsInOrg("orgA");
 
-        GithubAuthenticationToken authenticationToken = new GithubAuthenticationToken("accessToken", "https://api.github.com");
-        assertTrue(authenticationToken.isAuthenticated());
+            GithubAuthenticationToken authenticationToken = new GithubAuthenticationToken("accessToken", "https://api.github.com");
+            assertTrue(authenticationToken.isAuthenticated());
+        }
     }
 
     @Test
     public void testNotInAuthorizedOrgs() throws IOException {
-        mockGHMyselfAs("bob");
-        mockAuthorizedOrgs("orgA");
-        mockAsInOrg("orgB");
+        try (MockedStatic<Jenkins> mockedJenkins = Mockito.mockStatic(Jenkins.class);
+             MockedStatic<GitHubBuilder> mockedGitHubBuilder = Mockito.mockStatic(GitHubBuilder.class)) {
+            mockJenkins(mockedJenkins);
+            mockGHMyselfAs(mockedGitHubBuilder, "bob");
+            mockAuthorizedOrgs("orgA");
+            mockAsInOrg("orgB");
 
-        GithubAuthenticationToken authenticationToken = new GithubAuthenticationToken("accessToken", "https://api.github.com");
-        assertFalse(authenticationToken.isAuthenticated());
+            GithubAuthenticationToken authenticationToken = new GithubAuthenticationToken("accessToken", "https://api.github.com");
+            assertFalse(authenticationToken.isAuthenticated());
+        }
     }
 
     @After

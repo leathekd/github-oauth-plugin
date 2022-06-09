@@ -237,23 +237,23 @@ public class GithubAuthenticationToken extends AbstractAuthenticationToken {
             // https://developer.github.com/v3/orgs/#list-your-organizations
             // https://developer.github.com/v3/orgs/teams/#list-user-teams
             if (myRealm.hasScope("read:org") || myRealm.hasScope("admin:org") || myRealm.hasScope("user") || myRealm.hasScope("repo")) {
-                    Set<String> myOrgs = getUserOrgs();
+                Set<String> myOrgs = getUserOrgs();
 
-                    Map<String, Set<GHTeam>> myTeams = userTeamsCache.get(this.userName, unused -> {
-                        try {
-                            return getGitHub().getMyTeams();
-                        } catch (IOException e) {
-                            throw new UncheckedIOException("authorization failed for user = " + this.userName, e);
-                        }
-                    });
+                Map<String, Set<GHTeam>> myTeams = userTeamsCache.get(this.userName, unused -> {
+                    try {
+                        return getGitHub().getMyTeams();
+                    } catch (IOException e) {
+                        throw new UncheckedIOException("authorization failed for user = " + this.userName, e);
+                    }
+                });
 
-                    // fetch organization-only memberships (i.e.: groups without teams)
-                    for (String orgLogin : myOrgs) {
-                        if (!myTeams.containsKey(orgLogin)) {
-                            myTeams.put(orgLogin, Collections.emptySet());
-                        }
+                // fetch organization-only memberships (i.e.: groups without teams)
+                for (String orgLogin : myOrgs) {
+                    if (!myTeams.containsKey(orgLogin)) {
+                        myTeams.put(orgLogin, Collections.emptySet());
                     }
                 }
+
 
                 for (Map.Entry<String, Set<GHTeam>> teamEntry : myTeams.entrySet()) {
                     String orgLogin = teamEntry.getKey();
