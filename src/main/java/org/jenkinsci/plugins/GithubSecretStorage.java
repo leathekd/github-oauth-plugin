@@ -24,11 +24,12 @@
 package org.jenkinsci.plugins;
 
 import hudson.model.User;
-import org.jfree.util.Log;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class GithubSecretStorage {
 
@@ -36,27 +37,32 @@ public class GithubSecretStorage {
         // no accessible constructor
     }
 
-    public static boolean contains(@Nonnull User user) {
+    public static boolean contains(@NonNull User user) {
         return user.getProperty(GithubAccessTokenProperty.class) != null;
     }
 
-    public static @CheckForNull String retrieve(@Nonnull User user) {
+    public static @CheckForNull String retrieve(@NonNull User user) {
         GithubAccessTokenProperty property = user.getProperty(GithubAccessTokenProperty.class);
         if (property == null) {
-            Log.debug("Cache miss for username: " + user.getId());
+            LOGGER.log(Level.FINE, "Cache miss for username: " + user.getId());
             return null;
         } else {
-            Log.debug("Token retrieved using cache for username: " + user.getId());
+            LOGGER.log(Level.FINE, "Token retrieved using cache for username: " + user.getId());
             return property.getAccessToken().getPlainText();
         }
     }
 
-    public static void put(@Nonnull User user, @Nonnull String accessToken) {
-        Log.debug("Populating the cache for username: " + user.getId());
+    public static void put(@NonNull User user, @NonNull String accessToken) {
+        LOGGER.log(Level.FINE, "Populating the cache for username: " + user.getId());
         try {
             user.addProperty(new GithubAccessTokenProperty(accessToken));
         } catch (IOException e) {
-            Log.warn("Received an exception when trying to add the GitHub access token to the user: " + user.getId(), e);
+            LOGGER.log(Level.WARNING, "Received an exception when trying to add the GitHub access token to the user: " + user.getId(), e);
         }
     }
+
+    /**
+     * Logger for debugging purposes.
+     */
+    private static final Logger LOGGER = Logger.getLogger(GithubSecretStorage.class.getName());
 }
